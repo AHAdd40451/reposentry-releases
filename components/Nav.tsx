@@ -39,7 +39,7 @@ export function Nav() {
           {LINKS.map((l) => <a key={l.href} href={l.href} className="text-sm text-slate-400 transition hover:text-white">{l.label}</a>)}
         </nav>
         <div className="flex items-center gap-2">
-          <a href={DASHBOARD_URL} className="hidden px-3 text-sm text-slate-400 hover:text-white sm:block">Team sign in</a>
+          <a href={DASHBOARD_URL} className="hidden px-3 text-sm text-slate-400 hover:text-white sm:block">Sign in</a>
           <a href="/download" className="btn-primary hidden px-4 py-2 sm:inline-flex">Download</a>
           <button className="rounded-lg p-2 text-white md:hidden" onClick={() => setOpen(!open)} aria-label="Menu" aria-expanded={open}>
             {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}

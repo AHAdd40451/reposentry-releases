@@ -6,7 +6,7 @@ import { Nav } from '@/components/Nav';
 import { Footer } from '@/components/Footer';
 import { Terminal } from '@/components/Terminal';
 import { DownloadPanel, PrimaryDownload } from '@/components/Download';
-import { CHECKOUT, CONTACT_EMAIL } from '@/lib/config';
+import { CONTACT_EMAIL, SIGNUP } from '@/lib/config';
 
 export default function Home() {
   return (
@@ -281,30 +281,30 @@ function Pricing() {
   const plans = [
     {
       name: 'Individual',
-      price: '$9',
+      price: '$5',
       per: '/ month',
-      note: 'Billed yearly at $99',
+      note: 'First month free · cancel any time',
       text: 'For developers who clone code from strangers.',
-      cta: 'Get RepoSentry',
-      href: CHECKOUT.individual || '#download',
-      features: ['Up to 2 computers', 'Repo checks on clone and pull', 'Install-script gate', 'Secret and push guards', 'Decoy credentials', 'Message check and recovery mode'],
+      cta: 'Start free month',
+      href: SIGNUP.individual,
+      features: ['Up to 2 computers', '100 AI checks a month', 'Live check on every clone', 'One-click cleanup of malicious code', 'Secret and push guards', 'Decoy credentials and recovery mode'],
     },
     {
       name: 'Team',
-      price: '$15',
-      per: '/ seat / month',
-      note: 'Billed yearly · 2 computers per seat',
+      price: '$1',
+      per: '/ computer / month',
+      note: '10 computers = $10 · first month free',
       text: 'For companies onboarding and hiring developers.',
       cta: 'Start for your team',
-      href: CHECKOUT.team || `mailto:${CONTACT_EMAIL}?subject=RepoSentry%20Team`,
+      href: SIGNUP.team,
       highlight: true,
-      features: ['Everything in Individual', 'Company dashboard', 'Real-time alerts', 'Slack, Teams and Discord', 'Required protection policies', 'Coverage per computer'],
+      features: ['Everything in Individual', '50 AI checks per computer, shared by the team', 'Company dashboard and billing', 'Alerts, including cleanups', 'Slack, Teams and Discord', 'Required protection policies'],
     },
     {
       name: 'Enterprise',
       price: 'Custom',
       per: '',
-      note: '50+ seats',
+      note: '500+ computers',
       text: 'For large teams with security and compliance needs.',
       cta: 'Contact sales',
       href: `mailto:${CONTACT_EMAIL}?subject=RepoSentry%20Enterprise`,
@@ -348,9 +348,10 @@ function Faq() {
   const qs = [
     ['Does RepoSentry upload my code?', 'No. Repos are scanned on your computer. Only the few lines that look suspicious are sent for an AI verdict, never the whole project.'],
     ['Will it slow down git or npm?', 'Local checks take a few seconds and run in the background. You only see RepoSentry when something looks dangerous.'],
-    ['Does it change or delete my code?', 'Never on its own. It blocks and explains. You choose to allow, block or delete.'],
+    ['Does it change or delete my code?', 'Never on its own. It blocks and explains. If you choose “Clean up”, it removes only the malicious parts, backs up every file first, and scans again.'],
+    ['What happens when AI checks run out?', 'You stay protected. Repos are still checked with local rules and the threat network; only the AI explanation pauses until next month. Teams can add computers any time.'],
     ['What do I need to install?', 'Just the app. On Windows, Git must be installed (git-scm.com). Windows 10/11 already includes everything else.'],
-    ['How do I sign in after buying?', 'You’ll get an email with your account details. Download the app, sign in, and protection turns on automatically.'],
+    ['How do I sign in after buying?', 'Create your account (Google or email), start your free month, then download the app and choose “Sign in with browser”. Protection turns on automatically.'],
     ['Can my company see my code?', 'No. On team plans, admins see check results and alerts, never the contents of your repositories.'],
   ];
   return (

@@ -6,13 +6,10 @@ export const RELEASES_REPO = 'AHAdd40451/reposentry-releases';
 /** Company admin dashboard. Update after deploying it. */
 export const DASHBOARD_URL = 'https://admin.reposentry.coderivals.ltd';
 
-/**
- * Stripe Payment Links (Stripe → Payment Links → Create). Until they're set,
- * the buy buttons scroll to the download section instead.
- */
-export const CHECKOUT = {
-  individual: '',
-  team: '',
+/** Sign-up links: a free month, then Stripe billing, all handled in the dashboard. */
+export const SIGNUP = {
+  individual: `${DASHBOARD_URL}/signup?plan=individual`,
+  team: `${DASHBOARD_URL}/signup?plan=team`,
 };
 
 /** Where "Contact sales" goes. */

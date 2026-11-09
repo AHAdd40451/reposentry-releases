@@ -4,7 +4,7 @@
 export const RELEASES_REPO = 'AHAdd40451/reposentry-releases';
 
 /** Company admin dashboard. Update after deploying it. */
-export const DASHBOARD_URL = 'https://reposentry-admin.onrender.com';
+export const DASHBOARD_URL = 'https://admin.reposentry.coderivals.ltd';
 
 /**
  * Stripe Payment Links (Stripe → Payment Links → Create). Until they're set,

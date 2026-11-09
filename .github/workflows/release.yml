@@ -1,0 +1,110 @@
+# Builds the RepoSentry desktop app for macOS and Windows from the private
+# source repo and publishes the installers as a Release of this repo.
+#
+# Setup (done once), this repo → Settings → Secrets and variables → Actions:
+#   Secret   SOURCE_DEPLOY_KEY  private half of a READ-ONLY deploy key on AHAdd40451/Reposentry
+#   Variable API_URL            live API, e.g. https://api.reposentry.coderivals.ltd
+#
+# Release: Actions → "Release desktop app" → Run workflow → version 1.0.0
+#   or: gh workflow run release.yml -f version=1.0.0
+name: Release desktop app
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version, e.g. 1.0.1'
+        required: true
+      source_ref:
+        description: 'Branch or tag of the source repo to build'
+        default: main
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: macos-latest
+            args: --target universal-apple-darwin
+            rust_targets: aarch64-apple-darwin,x86_64-apple-darwin
+          - platform: windows-latest
+            args: ''
+            rust_targets: ''
+    runs-on: ${{ matrix.platform }}
+    defaults:
+      run:
+        working-directory: src/desktop
+    env:
+      VERSION: ${{ github.event.inputs.version }}
+      API_URL: ${{ vars.API_URL }}
+    steps:
+      - name: Check out private source (read-only deploy key)
+        uses: actions/checkout@v4
+        with:
+          repository: AHAdd40451/Reposentry
+          ref: ${{ github.event.inputs.source_ref }}
+          ssh-key: ${{ secrets.SOURCE_DEPLOY_KEY }}
+          path: src
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: src/desktop/package-lock.json
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.rust_targets }}
+
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src/desktop/src-tauri -> target
+
+      - name: Check settings
+        shell: bash
+        run: |
+          if [ -z "$API_URL" ]; then echo "::error::Set the API_URL repository variable first"; exit 1; fi
+
+      - name: Set version and live API URL
+        shell: bash
+        run: |
+          V="${VERSION#v}"
+          echo "VITE_API_URL=$API_URL" > .env
+          node -e '
+            const fs = require("fs");
+            const p = "src-tauri/tauri.conf.json";
+            const c = JSON.parse(fs.readFileSync(p, "utf8"));
+            c.version = process.argv[1];
+            const api = process.argv[2].replace(/\/$/, "");
+            c.app.security.csp = c.app.security.csp
+              .replace(/ http:\/\/localhost:\d+/g, "")
+              .replace("connect-src ", `connect-src ${api} `);
+            fs.writeFileSync(p, JSON.stringify(c, null, 2));
+            console.log("version", c.version, "| csp", c.app.security.csp);
+          ' "$V" "$API_URL"
+          echo "TAG=v$V" >> "$GITHUB_ENV"
+
+      - run: npm ci
+
+      - uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          projectPath: src/desktop
+          args: ${{ matrix.args }}
+          tagName: ${{ env.TAG }}
+          releaseName: RepoSentry ${{ env.TAG }}
+          releaseBody: |
+            Download the installer for your computer below.
+
+            - **macOS** (Apple Silicon and Intel): `.dmg`
+            - **Windows**: `.msi` or `-setup.exe`
+
+            Sign in with the account details from your purchase email.
+          releaseDraft: false
+          prerelease: false

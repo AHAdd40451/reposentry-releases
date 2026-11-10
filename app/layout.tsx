@@ -18,7 +18,7 @@ export const metadata: Metadata = {
     type: 'website',
   },
   icons: { icon: '/icon.svg' },
-  authors: [{ name: 'Code Rivals', url: 'https://coderivals.ltd' }],
+  authors: [{ name: 'Code Rivals', url: 'https://www.coderivals.ltd' }],
   creator: 'Code Rivals',
   publisher: 'Code Rivals',
 };

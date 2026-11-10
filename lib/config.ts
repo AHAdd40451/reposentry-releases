@@ -13,4 +13,4 @@ export const SIGNUP = {
 };
 
 /** Where "Contact sales" goes. */
-export const CONTACT_EMAIL = 'info@coderivals.ltd';
+export const CONTACT_EMAIL = 'reposentry@coderivals.ltd';

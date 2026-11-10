@@ -15,7 +15,7 @@ export function Footer() {
           <p className="mt-4 max-w-xs text-sm leading-relaxed text-slate-500">
             Protects developer machines from malicious repositories, packages and fake job tests.
           </p>
-          <p className="mt-3 text-xs text-slate-500">Built by <a href="https://coderivals.ltd" className="font-medium text-slate-300 hover:text-white">Code Rivals</a></p>
+          <p className="mt-3 text-xs text-slate-500">Built by <a href="https://www.coderivals.ltd" className="font-medium text-slate-300 hover:text-white">Code Rivals</a></p>
         </div>
         {cols.map((c) => (
           <div key={c.title}>
@@ -29,7 +29,7 @@ export function Footer() {
       <div className="container-x mt-12 flex flex-wrap items-center justify-between gap-3 border-t border-white/[0.06] pt-6 text-xs text-slate-600">
         <span>© {new Date().getFullYear()} RepoSentry. All rights reserved.</span>
         <span>
-          A product of <a href="https://coderivals.ltd" className="font-medium text-slate-400 hover:text-white">Code Rivals</a>
+          A product of <a href="https://www.coderivals.ltd" className="font-medium text-slate-400 hover:text-white">Code Rivals</a>
           {' · '}<a href={`mailto:${CONTACT_EMAIL}`} className="hover:text-white">{CONTACT_EMAIL}</a>
         </span>
       </div>

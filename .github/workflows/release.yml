@@ -4,6 +4,7 @@
 # Setup (done once), this repo → Settings → Secrets and variables → Actions:
 #   Secret   SOURCE_DEPLOY_KEY  private half of a READ-ONLY deploy key on AHAdd40451/Reposentry
 #   Variable API_URL            live API, e.g. https://api.reposentry.coderivals.ltd
+#   Variable DASHBOARD_URL      live dashboard (sign in with browser, billing)
 #
 # Release: Actions → "Release desktop app" → Run workflow → version 1.0.0
 #   or: gh workflow run release.yml -f version=1.0.0
@@ -41,6 +42,7 @@ jobs:
     env:
       VERSION: ${{ github.event.inputs.version }}
       API_URL: ${{ vars.API_URL }}
+      DASHBOARD_URL: ${{ vars.DASHBOARD_URL || 'https://admin.reposentry.coderivals.ltd' }}
     steps:
       - name: Check out private source (read-only deploy key)
         uses: actions/checkout@v4
@@ -74,7 +76,7 @@ jobs:
         shell: bash
         run: |
           V="${VERSION#v}"
-          echo "VITE_API_URL=$API_URL" > .env
+          printf 'VITE_API_URL=%s\nVITE_DASHBOARD_URL=%s\n' "$API_URL" "$DASHBOARD_URL" > .env
           node -e '
             const fs = require("fs");
             const p = "src-tauri/tauri.conf.json";

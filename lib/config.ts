@@ -4,7 +4,7 @@
 export const RELEASES_REPO = 'AHAdd40451/reposentry-releases';
 
 /** Company admin dashboard. Update after deploying it. */
-export const DASHBOARD_URL = 'https://admin.reposentry.coderivals.ltd';
+export const DASHBOARD_URL = process.env.NEXT_PUBLIC_DASHBOARD_URL || 'https://admin.reposentry.coderivals.ltd';
 
 /** Sign-up links: a free month, then Stripe billing, all handled in the dashboard. */
 export const SIGNUP = {

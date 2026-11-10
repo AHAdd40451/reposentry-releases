@@ -7,6 +7,7 @@ import { Footer } from '@/components/Footer';
 import { Terminal } from '@/components/Terminal';
 import { DownloadPanel, PrimaryDownload } from '@/components/Download';
 import { CONTACT_EMAIL, SIGNUP } from '@/lib/config';
+import { Platform } from '@/components/Platform';
 
 export default function Home() {
   return (
@@ -14,6 +15,7 @@ export default function Home() {
       <Nav />
       <main className="overflow-hidden">
         <Hero />
+        <Platform />
         <Threats />
         <HowItWorks />
         <Features />
@@ -48,7 +50,7 @@ function Hero() {
           </p>
           <div className="mt-9 flex flex-wrap items-center gap-3">
             <PrimaryDownload />
-            <a href="#how" className="btn-ghost">See how it works <ArrowRight className="h-4 w-4" /></a>
+            <a href="#platform" className="btn-ghost">See how it works <ArrowRight className="h-4 w-4" /></a>
           </div>
           <ul className="mt-9 flex flex-wrap gap-x-6 gap-y-2 text-sm text-slate-500">
             {['macOS and Windows', 'Checks in seconds', 'Your code stays on your machine'].map((t) => (

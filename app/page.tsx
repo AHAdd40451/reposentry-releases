@@ -289,7 +289,7 @@ function Pricing() {
       text: 'For developers who clone code from strangers.',
       cta: 'Start 7-day free trial',
       href: SIGNUP.individual,
-      features: ['Up to 2 computers', '100 AI checks a month', 'Live check on every clone', 'One-click cleanup of malicious code', 'Secret and push guards', 'Decoy credentials and recovery mode'],
+      features: ['Up to 2 computers', '100 AI checks a month', 'Live check on every clone', 'One-click cleanup of malicious code', 'Secret and push guards', 'System check for unwanted programs', 'Decoy credentials and recovery mode'],
     },
     {
       name: 'Team',
@@ -300,7 +300,7 @@ function Pricing() {
       cta: 'Start for your team',
       href: SIGNUP.team,
       highlight: true,
-      features: ['Everything in Individual', '50 AI checks per computer, shared by the team', 'Company dashboard and billing', 'Alerts, including cleanups', 'Slack, Teams and Discord', 'Required protection policies'],
+      features: ['Everything in Individual', '50 AI checks per computer, shared by the team', 'Company dashboard and billing', 'Alerts, including cleanups', 'Git activity: who cloned and pushed what', 'Block pushes outside the company', 'Freeze or block any repo', 'Weekly security email', 'Slack, Teams and Discord', 'Required protection policies'],
     },
     {
       name: 'Enterprise',
@@ -354,7 +354,7 @@ function Faq() {
     ['What happens when AI checks run out?', 'You stay protected. Repos are still checked with local rules and the threat network; only the AI explanation pauses until next month. Teams can add computers any time.'],
     ['What do I need to install?', 'Just the app. On Windows, Git must be installed (git-scm.com). Windows 10/11 already includes everything else.'],
     ['How do I sign in after buying?', 'Create your account (Google or email), start your 7-day free trial, then download the app and choose “Sign in with browser”. Protection turns on automatically.'],
-    ['Can my company see my code?', 'No. On team plans, admins see check results and alerts, never the contents of your repositories.'],
+    ['Can my company see my code?', 'No. On team plans, admins see check results, alerts, repo and branch names and commit titles, never the contents of your code. The app shows each employee exactly what is shared.'],
   ];
   return (
     <section id="faq" className="scroll-mt-20 py-24">

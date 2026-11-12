@@ -14,3 +14,6 @@ export const SIGNUP = {
 
 /** Where "Contact sales" goes. */
 export const CONTACT_EMAIL = 'reposentry@coderivals.ltd';
+
+/** RepoSentry API (the free scanner and the support chat use it). */
+export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.reposentry.coderivals.ltd';

@@ -9,6 +9,7 @@ const LINKS = [
   { href: '/#teams', label: 'For teams' },
   { href: '/#pricing', label: 'Pricing' },
   { href: '/#faq', label: 'FAQ' },
+  { href: '/scan', label: 'Free GitHub check' },
 ];
 
 export function Logo() {

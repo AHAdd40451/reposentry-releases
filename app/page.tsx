@@ -289,7 +289,7 @@ function Pricing() {
       text: 'For developers who clone code from strangers.',
       cta: 'Start 7-day free trial',
       href: SIGNUP.individual,
-      features: ['Up to 2 computers', '100 AI checks a month', 'Live check on every clone', 'One-click cleanup of malicious code', 'Secret and push guards', 'System check for unwanted programs', 'Decoy credentials and recovery mode'],
+      features: ['Up to 2 computers', '100 AI checks a month', 'Live check on every clone', 'One-click cleanup of malicious code', 'Secret and push guards', 'System check for unwanted programs', 'GitHub Watch: alerts on force-pushes and malware, one-click restore', 'Decoy credentials and recovery mode'],
     },
     {
       name: 'Team',

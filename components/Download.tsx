@@ -62,30 +62,21 @@ export function DownloadPanel() {
   const [os, setOs] = useState<OS>('other');
   useEffect(() => setOs(detectOS()), []);
 
+  // Only Windows for now; the Mac app comes back once it's signed with Apple.
   const cards = [
-    {
-      id: 'mac' as const,
-      icon: Apple,
-      title: 'macOS',
-      note: 'macOS 11 or later · Apple Silicon and Intel',
-      main: null,
-      soon: true,
-      alt: null,
-    },
     {
       id: 'windows' as const,
       icon: Monitor,
       title: 'Windows',
       note: 'Windows 10 or 11 · 64-bit · needs Git installed',
       main: exe && { label: 'Download installer (.exe)', a: exe },
-      soon: false,
       alt: msi && { label: '.msi for IT deployment', a: msi },
     },
   ];
 
   return (
     <div>
-      <div className="grid gap-5 md:grid-cols-2">
+      <div className="mx-auto grid max-w-md gap-5">
         {cards.map((c) => (
           <div key={c.id} className={`glass relative p-7 ${os === c.id ? 'ring-1 ring-brand-400/50' : ''}`}>
             {os === c.id && <span className="absolute right-5 top-5 rounded-full bg-brand-500/15 px-2.5 py-1 text-[11px] font-medium text-brand-300">Your computer</span>}
@@ -93,9 +84,7 @@ export function DownloadPanel() {
             <h3 className="mt-5 text-xl font-semibold text-white">{c.title}</h3>
             <p className="mt-1 text-sm text-slate-400">{c.note}</p>
             <div className="mt-6 flex flex-wrap items-center gap-3">
-              {c.soon ? (
-                <span className="btn-ghost cursor-default">Coming soon</span>
-              ) : c.main ? (
+              {c.main ? (
                 <a href={c.main.a.browser_download_url} className="btn-primary"><DownloadIcon className="h-4 w-4" />{c.main.label}</a>
               ) : (
                 <a href={RELEASES_PAGE} className="btn-ghost">{failed ? 'See all releases' : release ? 'Coming soon' : 'Loading…'}</a>
@@ -106,7 +95,8 @@ export function DownloadPanel() {
           </div>
         ))}
       </div>
-      <p className="mt-6 flex flex-wrap items-center justify-center gap-x-2 text-center text-sm text-slate-500">
+      <p className="mt-5 flex items-center justify-center gap-1.5 text-center text-sm text-slate-400"><Apple className="h-4 w-4" />The Mac version is coming soon.</p>
+      <p className="mt-3 flex flex-wrap items-center justify-center gap-x-2 text-center text-sm text-slate-500">
         {release ? <>Version {release.tag_name.replace(/^v/, '')} · released {new Date(release.published_at).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })} ·</> : null}
         <a href={RELEASES_PAGE} className="inline-flex items-center gap-1 hover:text-white">All releases <ExternalLink className="h-3.5 w-3.5" /></a>
       </p>

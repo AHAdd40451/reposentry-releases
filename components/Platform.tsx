@@ -151,7 +151,7 @@ export function Platform() {
         </ul>
 
         <div className="mt-10 grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-4">
-          {['Live check on every clone', 'One-click cleanup with backups', 'Push and secret guards', 'Decoy credentials catch theft'].map((t) => (
+          {['Live check on every clone', 'One-click cleanup with backups', 'Push and secret guards', 'Daily safety tips in the app'].map((t) => (
             <p key={t} className="flex items-center gap-2 rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3 text-slate-300"><Check className="h-4 w-4 text-emerald-400" />{t}</p>
           ))}
         </div>

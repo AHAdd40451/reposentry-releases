@@ -1,6 +1,6 @@
 import {
-  ArrowRight, BellRing, Bot, Briefcase, Check, Cpu, EyeOff, FileWarning, FolderLock, GitPullRequestArrow, KeyRound,
-  LifeBuoy, Lock, MessageSquareWarning, Network, PackageX, ScanSearch, ShieldCheck, Sparkles, Users, Zap,
+  ArrowRight, BellRing, Bot, Briefcase, Check, Cpu, FileWarning, FolderLock, GitPullRequestArrow, KeyRound,
+  LifeBuoy, Lock, Network, PackageX, ScanSearch, ShieldCheck, Sparkles, Users, Zap,
 } from 'lucide-react';
 import { Nav } from '@/components/Nav';
 import { Footer } from '@/components/Footer';
@@ -160,9 +160,7 @@ function Features() {
           </div>
           <Feature className="md:col-span-2" icon={GitPullRequestArrow} title="Push guard" text="A pre-push hook stops hidden, obfuscated or curl | sh code from ever reaching your repos." />
           <Feature className="md:col-span-2" icon={KeyRound} title="Secret leak guard" text="Commits containing API keys, private keys or .env files are blocked before they leave your laptop." />
-          <Feature className="md:col-span-2" icon={EyeOff} title="Decoy credentials" text="Fake keys and wallet backups are planted on your machine. If a thief uses them, you hear about it instantly." />
           <Feature className="md:col-span-2" icon={ScanSearch} title="Dependency risk" text="Flags typosquats, brand-new packages, sudden publisher changes and suspicious fresh releases." />
-          <Feature className="md:col-span-2" icon={MessageSquareWarning} title="Message check" text="Paste a recruiter or client message to spot the fake-interview scam before you even clone." />
           <Feature className="md:col-span-2" icon={Network} title="Shared threat network" text="When one user finds a malicious repo, it’s blocked for everyone, before it’s even downloaded." />
           <Feature className="md:col-span-2" icon={LifeBuoy} title="“I ran something” recovery" text="Stops processes from the repo, lists new startup items and gives you a key-rotation checklist." />
         </div>
@@ -292,7 +290,7 @@ function Pricing() {
       text: 'For developers who clone code from strangers.',
       cta: 'Start 7-day free trial',
       href: SIGNUP.individual,
-      features: ['Up to 2 computers', '100 AI checks a month', 'Live check on every clone', 'One-click cleanup of malicious code', 'Secret and push guards', 'System check for unwanted programs', 'GitHub Watch: alerts on force-pushes and malware, one-click restore', 'Decoy credentials and recovery mode'],
+      features: ['Up to 2 computers', '100 AI checks a month', 'Live check on every clone', 'One-click cleanup of malicious code', 'Secret and push guards', 'System check for unwanted programs', 'GitHub Watch: alerts on force-pushes and malware, one-click restore', 'Recovery steps if you ran something'],
     },
     {
       name: 'Team',

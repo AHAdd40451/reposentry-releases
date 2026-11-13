@@ -1,10 +1,18 @@
-# Builds the RepoSentry desktop app for macOS and Windows from the private
-# source repo and publishes the installers as a Release of this repo.
+# Builds the RepoSentry desktop app for Windows from the private source repo,
+# signs it with Azure Artifact Signing, and publishes the installers as a Release.
+# (macOS is paused until the Apple Developer account is ready.)
 #
 # Setup (done once), this repo → Settings → Secrets and variables → Actions:
 #   Secret   SOURCE_DEPLOY_KEY  private half of a READ-ONLY deploy key on AHAdd40451/Reposentry
 #   Variable API_URL            live API, e.g. https://api.reposentry.coderivals.ltd
 #   Variable DASHBOARD_URL      live dashboard (sign in with browser, billing)
+#
+# Azure Artifact Signing (so Windows shows "Verified publisher"):
+#   Variable AZURE_SIGNING_ENDPOINT  e.g. https://eus.codesigning.azure.net
+#   Variable AZURE_SIGNING_ACCOUNT   Artifact Signing account name
+#   Variable AZURE_CERT_PROFILE      certificate profile name
+#   Secret   AZURE_TENANT_ID, AZURE_CLIENT_ID, AZURE_CLIENT_SECRET  (app registration
+#            with the "Artifact Signing Certificate Profile Signer" role on the account)
 #
 # Release: Actions → "Release desktop app" → Run workflow → version 1.0.0
 #   or: gh workflow run release.yml -f version=1.0.0
@@ -19,23 +27,17 @@ on:
       source_ref:
         description: 'Branch or tag of the source repo to build'
         default: main
+      allow_unsigned:
+        description: 'Allow an unsigned build (testing only)'
+        type: boolean
+        default: false
 
 permissions:
   contents: write
 
 jobs:
   build:
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - platform: macos-latest
-            args: --target universal-apple-darwin
-            rust_targets: aarch64-apple-darwin,x86_64-apple-darwin
-          - platform: windows-latest
-            args: ''
-            rust_targets: ''
-    runs-on: ${{ matrix.platform }}
+    runs-on: windows-latest
     defaults:
       run:
         working-directory: src/desktop
@@ -43,6 +45,10 @@ jobs:
       VERSION: ${{ github.event.inputs.version }}
       API_URL: ${{ vars.API_URL }}
       DASHBOARD_URL: ${{ vars.DASHBOARD_URL || 'https://admin.reposentry.coderivals.ltd' }}
+      SIGN_ENDPOINT: ${{ vars.AZURE_SIGNING_ENDPOINT }}
+      SIGN_ACCOUNT: ${{ vars.AZURE_SIGNING_ACCOUNT }}
+      SIGN_PROFILE: ${{ vars.AZURE_CERT_PROFILE }}
+      ALLOW_UNSIGNED: ${{ github.event.inputs.allow_unsigned }}
     steps:
       - name: Check out private source (read-only deploy key)
         uses: actions/checkout@v4
@@ -60,8 +66,6 @@ jobs:
           cache-dependency-path: src/desktop/package-lock.json
 
       - uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: ${{ matrix.rust_targets }}
 
       - uses: swatinem/rust-cache@v2
         with:
@@ -91,21 +95,39 @@ jobs:
           ' "$V" "$API_URL"
           echo "TAG=v$V" >> "$GITHUB_ENV"
 
+      - name: Set up Azure signing
+        shell: bash
+        run: |
+          if [ -z "$SIGN_ENDPOINT" ] || [ -z "$SIGN_ACCOUNT" ] || [ -z "$SIGN_PROFILE" ]; then
+            if [ "$ALLOW_UNSIGNED" = "true" ]; then echo "::warning::Azure signing not set up: this build is UNSIGNED"; exit 0; fi
+            echo "::error::Azure signing is not set up (AZURE_SIGNING_* variables). Set it up, or run with allow_unsigned for a test build."; exit 1
+          fi
+          cargo install artifact-signing-cli --locked
+          node -e '
+            const fs = require("fs");
+            const p = "src-tauri/tauri.conf.json";
+            const c = JSON.parse(fs.readFileSync(p, "utf8"));
+            const [e, a, prof] = process.argv.slice(1);
+            c.bundle.windows = { ...c.bundle.windows, signCommand: `artifact-signing-cli -e ${e} -a ${a} -c ${prof} -d RepoSentry %1` };
+            fs.writeFileSync(p, JSON.stringify(c, null, 2));
+            console.log("signing with", a, "/", prof);
+          ' "$SIGN_ENDPOINT" "$SIGN_ACCOUNT" "$SIGN_PROFILE"
+
       - run: npm ci
 
       - uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
         with:
           projectPath: src/desktop
-          args: ${{ matrix.args }}
           tagName: ${{ env.TAG }}
           releaseName: RepoSentry ${{ env.TAG }}
           releaseBody: |
-            Download the installer for your computer below.
-
-            - **macOS** (Apple Silicon and Intel): `.dmg`
-            - **Windows**: `.msi` or `-setup.exe`
+            Download the Windows installer below: `-setup.exe` (or `.msi` for IT deployment).
+            The macOS version is coming soon.
 
             Sign in with the account details from your purchase email.
           releaseDraft: false

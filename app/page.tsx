@@ -56,7 +56,7 @@ function Hero() {
             <span className="h-1.5 w-1.5 rounded-full bg-rose-400" />Worm spreading through GitHub repos. Check yours free <ArrowRight className="h-3.5 w-3.5" />
           </a>
           <ul className="mt-9 flex flex-wrap gap-x-6 gap-y-2 text-sm text-slate-500">
-            {['macOS and Windows', 'Checks in seconds', 'Your code stays on your machine'].map((t) => (
+            {['Windows · Mac coming soon', 'Checks in seconds', 'Your code stays on your machine'].map((t) => (
               <li key={t} className="flex items-center gap-2"><Check className="h-4 w-4 text-emerald-400" />{t}</li>
             ))}
           </ul>

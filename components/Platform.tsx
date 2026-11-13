@@ -34,7 +34,7 @@ const PILLARS = [
     title: 'Real-time, every clone',
     text: 'Git hooks wake RepoSentry on every clone. The app comes forward with a live check; pulls and pushes are guarded quietly. One click removes what it finds.',
     stat: 'Always on',
-    statLabel: 'from the menu bar',
+    statLabel: 'in the background',
   },
 ];
 
@@ -114,7 +114,7 @@ function DashboardMock() {
 
       {/* Live check from the desktop app */}
       <div className="absolute -bottom-10 -left-6 hidden w-[270px] animate-float rounded-2xl border border-white/10 bg-slate-900/95 p-4 shadow-2xl backdrop-blur-xl lg:block">
-        <p className="flex items-center gap-2 text-[11px] font-medium text-brand-300"><ScanSearch className="h-3.5 w-3.5" />Live check · Mac app</p>
+        <p className="flex items-center gap-2 text-[11px] font-medium text-brand-300"><ScanSearch className="h-3.5 w-3.5" />Live check · desktop app</p>
         <p className="mt-1.5 font-mono text-xs text-white">take-home-test</p>
         <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/10"><div className="h-full w-full animate-shine rounded-full bg-[linear-gradient(90deg,#6366F1,#A78BFA,#6366F1)] bg-[length:200%_100%]" /></div>
         <p className="mt-1.5 text-[11px] text-slate-400">214 files · Rust engine · 1.2s</p>

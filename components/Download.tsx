@@ -40,12 +40,13 @@ export function useLatestRelease() {
 /** Big OS-aware button for the hero. */
 export function PrimaryDownload() {
   const [os, setOs] = useState<OS>('other');
-  const { mac, exe, msi } = useLatestRelease();
+  const { exe, msi } = useLatestRelease();
   useEffect(() => setOs(detectOS()), []);
 
-  const asset = os === 'mac' ? mac : os === 'windows' ? exe ?? msi : undefined;
-  const label = os === 'mac' ? 'Download for macOS' : os === 'windows' ? 'Download for Windows' : 'Download RepoSentry';
-  const Icon = os === 'mac' ? Apple : os === 'windows' ? Monitor : DownloadIcon;
+  // macOS builds are paused until signing with Apple is ready: Mac visitors go to the download page.
+  const asset = os === 'windows' ? exe ?? msi : undefined;
+  const label = os === 'windows' ? 'Download for Windows' : 'Download RepoSentry';
+  const Icon = os === 'windows' ? Monitor : DownloadIcon;
 
   return (
     <a href={asset?.browser_download_url ?? '#download'} className="btn-primary">
@@ -57,7 +58,7 @@ export function PrimaryDownload() {
 
 /** Full download panel with both platforms. */
 export function DownloadPanel() {
-  const { release, failed, mac, msi, exe } = useLatestRelease();
+  const { release, failed, msi, exe } = useLatestRelease();
   const [os, setOs] = useState<OS>('other');
   useEffect(() => setOs(detectOS()), []);
 
@@ -67,7 +68,8 @@ export function DownloadPanel() {
       icon: Apple,
       title: 'macOS',
       note: 'macOS 11 or later · Apple Silicon and Intel',
-      main: mac && { label: 'Download .dmg', a: mac },
+      main: null,
+      soon: true,
       alt: null,
     },
     {
@@ -76,6 +78,7 @@ export function DownloadPanel() {
       title: 'Windows',
       note: 'Windows 10 or 11 · 64-bit · needs Git installed',
       main: exe && { label: 'Download installer (.exe)', a: exe },
+      soon: false,
       alt: msi && { label: '.msi for IT deployment', a: msi },
     },
   ];
@@ -90,7 +93,9 @@ export function DownloadPanel() {
             <h3 className="mt-5 text-xl font-semibold text-white">{c.title}</h3>
             <p className="mt-1 text-sm text-slate-400">{c.note}</p>
             <div className="mt-6 flex flex-wrap items-center gap-3">
-              {c.main ? (
+              {c.soon ? (
+                <span className="btn-ghost cursor-default">Coming soon</span>
+              ) : c.main ? (
                 <a href={c.main.a.browser_download_url} className="btn-primary"><DownloadIcon className="h-4 w-4" />{c.main.label}</a>
               ) : (
                 <a href={RELEASES_PAGE} className="btn-ghost">{failed ? 'See all releases' : release ? 'Coming soon' : 'Loading…'}</a>

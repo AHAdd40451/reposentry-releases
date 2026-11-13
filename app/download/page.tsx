@@ -6,8 +6,8 @@ import { DownloadPanel } from '@/components/Download';
 export const metadata: Metadata = { title: 'Download RepoSentry' };
 
 const STEPS = [
-  ['Download', 'Pick the installer for your computer below.'],
-  ['Install', 'macOS: open the .dmg and drag RepoSentry to Applications. Windows: run the installer.'],
+  ['Download', 'Get the Windows installer below. The Mac version is coming soon.'],
+  ['Install', 'Run the installer. It sets up protection for your user account.'],
   ['Sign in', 'Use the email and password from your purchase email. Protection turns on automatically.'],
 ];
 
@@ -38,8 +38,7 @@ export default function DownloadPage() {
           <div className="glass mx-auto mt-6 max-w-4xl p-6 text-sm leading-relaxed text-slate-400">
             <p className="font-medium text-white">Seeing a security warning?</p>
             <p className="mt-1.5">
-              Until signed builds ship: on <span className="text-slate-200">macOS</span>, right-click RepoSentry in Applications and choose Open. On{' '}
-              <span className="text-slate-200">Windows</span>, click “More info” then “Run anyway”.
+              If Windows SmartScreen warns about a new download, click “More info” then “Run anyway”.
             </p>
           </div>
         </div>

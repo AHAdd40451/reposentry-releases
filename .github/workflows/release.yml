@@ -14,6 +14,10 @@
 #   Secret   AZURE_TENANT_ID, AZURE_CLIENT_ID, AZURE_CLIENT_SECRET  (app registration
 #            with the "Artifact Signing Certificate Profile Signer" role on the account)
 #
+# Auto-update: installed apps read latest.json from the newest release.
+#   Secret   TAURI_SIGNING_PRIVATE_KEY, TAURI_SIGNING_PRIVATE_KEY_PASSWORD  (updater key; the
+#            public half is in desktop/src-tauri/tauri.conf.json → plugins.updater.pubkey)
+#
 # Release: Actions → "Release desktop app" → Run workflow → version 1.0.0
 #   or: gh workflow run release.yml -f version=1.0.0
 name: Release desktop app
@@ -121,10 +125,15 @@ jobs:
           AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
           AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
           AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          # Signs the update files so installed apps only accept updates built here
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           projectPath: src/desktop
           tagName: ${{ env.TAG }}
           releaseName: RepoSentry ${{ env.TAG }}
+          includeUpdaterJson: true
+          updaterJsonPreferNsis: true
           releaseBody: |
             Download the Windows installer below: `-setup.exe` (or `.msi` for IT deployment).
             The macOS version is coming soon.

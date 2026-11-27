@@ -183,15 +183,23 @@ jobs:
         if: env.HAS_SIGNER == 'true'
         shell: pwsh
         run: |
-          $files = @(Get-ChildItem src-tauri/target/release -Filter *.exe -File) +
-                   @(Get-ChildItem src-tauri/target/release/bundle/nsis -Filter *.exe -File) +
-                   @(Get-ChildItem src-tauri/target/release/bundle/msi -Filter *.msi -File)
-          if ($files.Count -lt 3) { Write-Output "::error::Expected the app, setup and msi files, found $($files.Count)"; exit 1 }
+          # Check the installers and the app .exe packed inside each of them
+          # (the copy left in target/release is not the one that ships).
+          $setup = Get-ChildItem src-tauri/target/release/bundle/nsis -Filter *-setup.exe -File | Select-Object -First 1
+          $msi = Get-ChildItem src-tauri/target/release/bundle/msi -Filter *.msi -File | Select-Object -First 1
+          if (-not $setup -or -not $msi) { Write-Output "::error::The setup .exe or .msi is missing"; exit 1 }
+          $out = Join-Path $env:RUNNER_TEMP 'unpacked'
+          7z x $setup.FullName "-o$out\nsis" -y | Out-Null
+          Start-Process msiexec.exe -Wait -ArgumentList @('/a', "`"$($msi.FullName)`"", '/qn', "TARGETDIR=`"$out\msi`"")
+          $inner = @(Get-ChildItem $out -Recurse -File -Filter reposentry.exe)
+          if ($inner.Count -lt 2) { Write-Output "::error::Could not find the app .exe inside both installers (found $($inner.Count))"; exit 1 }
+          $files = @($setup, $msi) + $inner
           $bad = 0
           foreach ($f in $files) {
             $s = Get-AuthenticodeSignature -FilePath $f.FullName
             $who = $s.SignerCertificate.Subject
-            Write-Output ("{0,-45} {1,-8} {2}" -f $f.Name, $s.Status, $who)
+            $label = if ($f.FullName.StartsWith($out)) { "inside " + $f.FullName.Substring($out.Length + 1).Split([char]92)[0] + ": " + $f.Name } else { $f.Name }
+            Write-Output ("{0,-45} {1,-8} {2}" -f $label, $s.Status, $who)
             if ($s.Status -ne 'Valid' -or $who -notmatch 'Code Rivals') { $bad++ }
             if (-not $s.TimeStamperCertificate) { Write-Output "::error::$($f.Name) has no timestamp"; $bad++ }
           }

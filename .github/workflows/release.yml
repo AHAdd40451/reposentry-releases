@@ -1,5 +1,5 @@
 # Builds the RepoSentry desktop app for Windows from the private source repo,
-# signs it with Azure Artifact Signing, and publishes the installers as a Release.
+# signs it with SSL.com eSigner (publisher "Code Rivals Ltd"), and publishes the installers as a Release.
 # (macOS is paused until the Apple Developer account is ready.)
 #
 # Setup (done once), this repo → Settings → Secrets and variables → Actions:
@@ -7,12 +7,11 @@
 #   Variable API_URL            live API, e.g. https://api.reposentry.coderivals.ltd
 #   Variable DASHBOARD_URL      live dashboard (sign in with browser, billing)
 #
-# Azure Artifact Signing (so Windows shows "Verified publisher"):
-#   Variable AZURE_SIGNING_ENDPOINT  e.g. https://eus.codesigning.azure.net
-#   Variable AZURE_SIGNING_ACCOUNT   Artifact Signing account name
-#   Variable AZURE_CERT_PROFILE      certificate profile name
-#   Secret   AZURE_TENANT_ID, AZURE_CLIENT_ID, AZURE_CLIENT_SECRET  (app registration
-#            with the "Artifact Signing Certificate Profile Signer" role on the account)
+# SSL.com eSigner code signing (so Windows shows "Code Rivals Ltd" as the publisher):
+#   Secret   ES_USERNAME, ES_PASSWORD, CREDENTIAL_ID, ES_TOTP_SECRET
+#   Tauri runs the sign script on the app .exe before it is packed into the installers,
+#   then on the setup .exe, its uninstaller and the .msi, before the update files are made.
+#   Each file uses one eSigner signing from the plan's monthly allowance.
 #
 # Auto-update: installed apps read latest.json from the newest release.
 #   Secret   TAURI_SIGNING_PRIVATE_KEY, TAURI_SIGNING_PRIVATE_KEY_PASSWORD  (updater key; the
@@ -49,9 +48,7 @@ jobs:
       VERSION: ${{ github.event.inputs.version }}
       API_URL: ${{ vars.API_URL }}
       DASHBOARD_URL: ${{ vars.DASHBOARD_URL || 'https://admin.reposentry.coderivals.ltd' }}
-      SIGN_ENDPOINT: ${{ vars.AZURE_SIGNING_ENDPOINT }}
-      SIGN_ACCOUNT: ${{ vars.AZURE_SIGNING_ACCOUNT }}
-      SIGN_PROFILE: ${{ vars.AZURE_CERT_PROFILE }}
+      HAS_SIGNER: ${{ secrets.ES_USERNAME != '' && secrets.ES_PASSWORD != '' && secrets.CREDENTIAL_ID != '' && secrets.ES_TOTP_SECRET != '' }}
       ALLOW_UNSIGNED: ${{ github.event.inputs.allow_unsigned }}
     steps:
       - name: Check out private source (read-only deploy key)
@@ -99,32 +96,71 @@ jobs:
           ' "$V" "$API_URL"
           echo "TAG=v$V" >> "$GITHUB_ENV"
 
-      - name: Set up Azure signing
-        shell: bash
+      - name: Set up eSigner code signing
+        shell: pwsh
         run: |
-          if [ -z "$SIGN_ENDPOINT" ] || [ -z "$SIGN_ACCOUNT" ] || [ -z "$SIGN_PROFILE" ]; then
-            if [ "$ALLOW_UNSIGNED" = "true" ]; then echo "::warning::Azure signing not set up: this build is UNSIGNED"; exit 0; fi
-            echo "::error::Azure signing is not set up (AZURE_SIGNING_* variables). Set it up, or run with allow_unsigned for a test build."; exit 1
-          fi
-          cargo install artifact-signing-cli --locked
+          if ($env:HAS_SIGNER -ne 'true') {
+            if ($env:ALLOW_UNSIGNED -eq 'true') { Write-Output "::warning::eSigner secrets are missing: this build is UNSIGNED"; exit 0 }
+            Write-Output "::error::eSigner secrets are missing (ES_USERNAME, ES_PASSWORD, CREDENTIAL_ID, ES_TOTP_SECRET). Add them, or run with allow_unsigned for a test build."; exit 1
+          }
+          # SSL.com CodeSignTool (the same tool sslcom/esigner-codesign runs), production environment
+          $v = 'v1.3.2'
+          $tool = Join-Path $env:RUNNER_TEMP 'CodeSignTool'
+          $zip = Join-Path $env:RUNNER_TEMP 'CodeSignTool.zip'
+          Invoke-WebRequest "https://github.com/SSLcom/CodeSignTool/releases/download/$v/CodeSignTool-$v-windows.zip" -OutFile $zip
+          Expand-Archive $zip -DestinationPath $tool -Force
+          Set-Content (Join-Path $tool 'conf\code_sign_tool.properties') -Encoding ascii -Value @(
+            'CLIENT_ID=kaXTRACNijSWsFdRKg_KAfD3fqrBlzMbWs6TwWHwAn8',
+            'OAUTH2_ENDPOINT=https://login.ssl.com/oauth2/token',
+            'CSC_API_ENDPOINT=https://cs.ssl.com',
+            'TSA_URL=http://ts.ssl.com',
+            'TSA_LEGACY_URL=http://ts.ssl.com/legacy')
+
+          # Tauri calls this for every Windows file it signs. Secrets come from the environment,
+          # never from the command line Tauri prints. Java is called directly so cmd.exe can't
+          # mangle special characters in the password.
+          $script = Join-Path $env:RUNNER_TEMP 'esign.ps1'
+          @'
+          param([Parameter(Mandatory)][string]$File)
+          $ErrorActionPreference = 'Stop'
+          $tool = Join-Path $env:RUNNER_TEMP 'CodeSignTool'
+          $java = Join-Path $tool 'jdk-11.0.2\bin\java.exe'
+          $jar = Get-ChildItem (Join-Path $tool 'jar') -Filter 'code_sign_tool-*.jar' | Select-Object -First 1
+          $env:CODE_SIGN_TOOL_PATH = $tool
+          Write-Host "Signing $(Split-Path $File -Leaf)"
+          for ($try = 1; $try -le 3; $try++) {
+            Push-Location $tool
+            try {
+              $out = & $java -Xmx1024M -jar $jar.FullName sign "-username=$env:ES_USERNAME" "-password=$env:ES_PASSWORD" "-credential_id=$env:CREDENTIAL_ID" "-totp_secret=$env:ES_TOTP_SECRET" "-input_file_path=$File" '-override=true' 2>&1 | Out-String
+            } finally { Pop-Location }
+            # CodeSignTool can exit 0 on failure, so trust only the file's signature.
+            $sig = Get-AuthenticodeSignature -FilePath $File
+            if ($sig.Status -eq 'Valid') { Write-Host "Signed by $($sig.SignerCertificate.Subject)"; exit 0 }
+            Write-Host "Try $try failed ($($sig.Status)): $($out.Trim())"
+            Start-Sleep -Seconds (10 * $try)
+          }
+          Write-Error "Could not sign $File"
+          exit 1
+          '@ | Set-Content $script -Encoding utf8
+
           node -e '
             const fs = require("fs");
             const p = "src-tauri/tauri.conf.json";
             const c = JSON.parse(fs.readFileSync(p, "utf8"));
-            const [e, a, prof] = process.argv.slice(1);
-            c.bundle.windows = { ...c.bundle.windows, signCommand: `artifact-signing-cli -e ${e} -a ${a} -c ${prof} -d RepoSentry %1` };
+            c.bundle.windows = { ...c.bundle.windows, signCommand: { cmd: "pwsh", args: ["-NoProfile", "-NonInteractive", "-File", process.argv[1], "%1"] } };
             fs.writeFileSync(p, JSON.stringify(c, null, 2));
-            console.log("signing with", a, "/", prof);
-          ' "$SIGN_ENDPOINT" "$SIGN_ACCOUNT" "$SIGN_PROFILE"
+            console.log("signing with SSL.com eSigner");
+          ' "$script"
 
       - run: npm ci
 
       - uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          ES_USERNAME: ${{ secrets.ES_USERNAME }}
+          ES_PASSWORD: ${{ secrets.ES_PASSWORD }}
+          CREDENTIAL_ID: ${{ secrets.CREDENTIAL_ID }}
+          ES_TOTP_SECRET: ${{ secrets.ES_TOTP_SECRET }}
           # Signs the update files so installed apps only accept updates built here
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
@@ -139,5 +175,34 @@ jobs:
             The macOS version is coming soon.
 
             Sign in with the account details from your purchase email.
-          releaseDraft: false
+          # Stays a draft (invisible to installed apps) until the signature check below passes.
+          releaseDraft: true
           prerelease: false
+
+      - name: Check the Windows signatures
+        if: env.HAS_SIGNER == 'true'
+        shell: pwsh
+        run: |
+          $files = @(Get-ChildItem src-tauri/target/release -Filter *.exe -File) +
+                   @(Get-ChildItem src-tauri/target/release/bundle/nsis -Filter *.exe -File) +
+                   @(Get-ChildItem src-tauri/target/release/bundle/msi -Filter *.msi -File)
+          if ($files.Count -lt 3) { Write-Output "::error::Expected the app, setup and msi files, found $($files.Count)"; exit 1 }
+          $bad = 0
+          foreach ($f in $files) {
+            $s = Get-AuthenticodeSignature -FilePath $f.FullName
+            $who = $s.SignerCertificate.Subject
+            Write-Output ("{0,-45} {1,-8} {2}" -f $f.Name, $s.Status, $who)
+            if ($s.Status -ne 'Valid' -or $who -notmatch 'Code Rivals') { $bad++ }
+            if (-not $s.TimeStamperCertificate) { Write-Output "::error::$($f.Name) has no timestamp"; $bad++ }
+          }
+          if ($bad) { Write-Output "::error::$bad file(s) are not signed by Code Rivals Ltd. The release stays a draft."; exit 1 }
+          $sig = Get-AuthenticodeSignature -FilePath (Get-ChildItem src-tauri/target/release/bundle/nsis -Filter *.exe | Select-Object -First 1).FullName
+          "### Windows publisher`n``$($sig.SignerCertificate.GetNameInfo('SimpleName', $false))``" >> $env:GITHUB_STEP_SUMMARY
+
+      - name: Publish the release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ "$HAS_SIGNER" != "true" ] && [ "$ALLOW_UNSIGNED" != "true" ]; then exit 1; fi
+          gh release edit "$TAG" -R "${{ github.repository }}" --draft=false --latest
